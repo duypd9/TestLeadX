@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đánh Giá Tố Chất & Tư Duy PM - PO - SA</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        slate: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .draggable-item {
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        .drag-over {
+            border-color: #2563eb !important;
+            background-color: #eff6ff !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white py-4 px-4 shadow-lg sticky top-0 z-50 border-b border-indigo-900/30">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg shadow-md animate-pulse">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight">Học Viện Đào Tạo Khung Năng Lực Quốc Tế</h1>
+                    <p class="text-[11px] text-blue-300 font-medium">Hệ Thống Đánh Giá & Tuyển Sinh Nhân Sự Dự Án: PM | PO | SA</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="bg-blue-950/80 border border-blue-700/40 text-blue-300 text-xs px-3 py-1.5 rounded-full font-semibold hidden md:inline-block">
+                    Standardized Assessment (SHL & GMAT)
+                </span>
+                <div id="test-timer-wrapper" class="hidden flex items-center gap-2 bg-rose-900/40 border border-rose-500/30 text-rose-300 text-xs px-3 py-1.5 rounded-lg font-mono">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                    <span>THỜI GIAN:</span>
+                    <span id="test-timer" class="font-bold">40:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification system for errors/warnings instead of alerts -->
+    <div id="custom-alert" class="fixed top-20 right-4 left-4 sm:left-auto sm:w-96 bg-white border-l-4 border-rose-500 rounded-r-lg shadow-2xl p-4 z-50 transform translate-x-full transition-transform duration-300 hidden">
+        <div class="flex items-start gap-3">
+            <div class="text-rose-500 mt-0.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <div class="flex-grow">
+                <h4 class="font-bold text-gray-900 text-xs uppercase">Cảnh Báo Hệ Thống</h4>
+                <p id="custom-alert-msg" class="text-xs text-gray-600 mt-1">Thông báo lỗi chi tiết sẽ xuất hiện tại đây.</p>
+            </div>
+            <button onclick="closeAlert()" class="text-gray-400 hover:text-gray-600 text-sm font-bold">&times;</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:py-6">
+
+        <!-- STEP 1: WELCOME & REGISTRATION -->
+        <div id="step-welcome" class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden transition-all duration-300">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-850 p-6 md:p-10 text-white text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent"></div>
+                <span class="bg-indigo-600 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Tuyển sinh dự án</span>
+                <h2 class="text-2xl md:text-4xl font-extrabold mt-3 leading-tight">Đánh Giá Tư Duy Quốc Tế (PM/PO/SA)</h2>
+                <p class="mt-4 text-indigo-100 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
+                    Hệ thống đánh giá tố chất hành vi (Ipsative Method) và tư duy hệ thống (System Thinking) tiêu chuẩn châu Âu dành riêng cho ba vai trò trụ cột của một dự án công nghệ.
+                </p>
+            </div>
+            
+            <div class="p-6 md:p-10">
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-gray-900 text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-blue-600 rounded-full"></span> Cấu trúc bài đánh giá (40 Câu):
+                        </h3>
+                        <ul class="space-y-3 text-xs md:text-sm text-gray-600">
+                            <li class="flex items-start gap-3">
+                                <span class="bg-blue-100 text-blue-600 p-1 rounded-full mt-0.5 text-xs">✔</span>
+                                <div>
+                                    <strong>Phần 1: Khảo Sát Tố Chất (20 Câu):</strong> Thí sinh lựa chọn hành vi <strong class="text-blue-600">Most (Giống nhất)</strong> và <strong class="text-rose-600">Least (Ít giống nhất)</strong> trong một nhóm ba phát biểu. Giúp định dạng rõ nét tố chất PM, PO hay SA của bạn.
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="bg-blue-100 text-blue-600 p-1 rounded-full mt-0.5 text-xs">✔</span>
+                                <div>
+                                    <strong>Phần 2: Tư Duy Logic (20 Câu):</strong> Đề bài dạng GMAT, McKinsey PST và kiểm định IQ không gian, bao gồm các bài toán giải thuật, tối ưu hóa tài nguyên và chuỗi hình vẽ logic tương tác.
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-4 border-t md:border-t-0 md:border-l border-slate-150 pt-6 md:pt-0 md:pl-8">
+                        <h3 class="font-bold text-gray-900 text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-blue-600 rounded-full"></span> Quy tắc phòng thi trực tuyến:
+                        </h3>
+                        <ul class="space-y-2.5 text-xs md:text-sm text-gray-600">
+                            <li>⏱️ <strong>Tổng thời gian làm bài:</strong> 40 phút. Đồng hồ sẽ chạy ngay khi bạn ấn Bắt đầu.</li>
+                            <li>🔄 <strong>Cơ chế ngẫu nhiên hóa:</strong> Mỗi lần tải lại bài thi sẽ tự tạo mới một tập hợp 40 câu hỏi hoàn toàn khác nhau từ ngân hàng đề.</li>
+                            <li>🚫 <strong>Nguyên tắc khách quan:</strong> Hãy làm bài độc lập và trung thực để hệ thống phản ánh đúng kỹ năng hiện tại của bạn.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Registration Form -->
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 text-center">ĐĂNG KÝ THÔNG TIN THÍ SINH</h3>
+                    <form id="candidate-form" class="space-y-4 max-w-md mx-auto" onsubmit="event.preventDefault(); startAssessment();">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Họ và tên thí sinh</label>
+                                <input type="text" id="cand-name" required class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm" placeholder="Ví dụ: Nguyễn Văn A">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Địa chỉ Email nhận kết quả</label>
+                                <input type="email" id="cand-email" required class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm" placeholder="email@domain.com">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-sm mt-2">
+                            Khởi Động Bài Kiểm Tra (40 Câu) 🚀
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASSESSMENT ENGINE (HIDDEN BY DEFAULT) -->
+        <div id="assessment-container" class="hidden space-y-4">
+            
+            <!-- Progress Tracker Dashboard -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-150 p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-150 text-blue-700 uppercase" id="current-part-badge">PHẦN 1/2</span>
+                    <h3 class="font-bold text-slate-800 text-xs md:text-sm" id="part-title-display">Đánh Giá Tố Chất Công Việc</h3>
+                </div>
+                <div class="w-full md:w-80 flex items-center gap-4">
+                    <div class="flex-grow">
+                        <div class="flex justify-between text-[11px] text-gray-500 mb-1">
+                            <span>Mức độ hoàn thành: <b id="answered-count">0/40</b> câu</span>
+                            <span id="progress-percent-text" class="font-bold text-blue-600">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div id="progress-bar-fill" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wizard Step Card -->
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-150 overflow-hidden">
+                <div class="bg-slate-900 text-white px-6 py-3.5 flex justify-between items-center text-xs border-b border-slate-800">
+                    <span class="font-bold tracking-wider text-blue-400" id="wizard-question-title">CÂU HỎI SỐ 1 / 20</span>
+                    <span class="text-slate-400 font-mono" id="wizard-category">Nhận thức vai trò & Hành xử</span>
+                </div>
+
+                <div class="p-6 md:p-8" id="wizard-body-content">
+                    <!-- Dynamic Question UI injected here by Javascript -->
+                </div>
+
+                <!-- Wizard Navigation Footer -->
+                <div class="bg-slate-50 px-6 py-4 border-t border-slate-150 flex justify-between items-center">
+                    <button id="btn-prev" onclick="handlePrev()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold py-2.5 px-5 rounded-xl text-xs transition-all flex items-center gap-1">
+                        ❮ Quay lại
+                    </button>
+                    
+                    <div class="flex items-center gap-1.5 overflow-x-auto max-w-[50%] py-1" id="question-dots">
+                        <!-- Tiny visual dots representing question indices -->
+                    </div>
+
+                    <button id="btn-next" onclick="handleNext()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow transition-all flex items-center gap-1">
+                        Tiếp theo ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS REPORT PAGE (HIDDEN BY DEFAULT) -->
+        <div id="results-container" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-150 overflow-hidden">
+                <!-- Top Summary Card -->
+                <div class="bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-6 md:p-8 text-white relative">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent"></div>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div>
+                            <span class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Hồ Sơ Năng Lực Trực Tuyến</span>
+                            <h2 class="text-2xl md:text-3xl font-extrabold mt-2 tracking-tight" id="res-cand-name">Họ Tên Thí Sinh</h2>
+                            <p class="text-xs text-indigo-300 mt-1" id="res-cand-email">email@test.com</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/10 text-center min-w-[120px]">
+                                <p class="text-[10px] text-indigo-300 uppercase font-semibold tracking-wider">Tư duy Logic</p>
+                                <p class="text-2xl md:text-3xl font-black text-emerald-400 mt-1" id="res-logic-score">0 / 100</p>
+                                <p class="text-[9px] text-slate-400">GMAT & IQ Standard</p>
+                            </div>
+                            <div class="bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/10 text-center min-w-[120px]">
+                                <p class="text-[10px] text-indigo-300 uppercase font-semibold tracking-wider">Mức độ tương thích</p>
+                                <p class="text-2xl md:text-3xl font-black text-indigo-400 mt-1" id="res-affinity-score">92%</p>
+                                <p class="text-[9px] text-slate-400">Role Matching</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 md:p-8 space-y-8">
+                    <!-- Recommended Role Banner -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-5">
+                        <div class="bg-blue-600 text-white rounded-2xl p-3 flex-shrink-0 shadow-lg">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-center md:text-left flex-grow">
+                            <span class="text-[10px] uppercase font-extrabold text-blue-700 tracking-widest block">KHUYẾN NGHỊ PHÂN VAI TRÒ TỐI ƯU</span>
+                            <h3 class="text-xl md:text-2xl font-black text-slate-900 mt-1 leading-tight" id="res-recommended-role">Project Manager (PM)</h3>
+                            <p class="text-xs md:text-sm text-slate-600 mt-1.5 leading-relaxed" id="res-role-brief">Mô tả tóm tắt tính cách và năng lực thiên hướng của thí sinh.</p>
+                        </div>
+                    </div>
+
+                    <!-- Role Matching Graph -->
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-slate-900 text-sm md:text-base flex items-center gap-1.5">
+                            📊 Biểu đồ Đối Chiếu Phân Bổ Tố Chất Hành Vi
+                        </h4>
+                        <p class="text-xs text-slate-500">Được đo lường bằng việc ép buộc chọn Most/Least giữa các nhóm chỉ số làm việc khác nhau.</p>
+                        
+                        <div class="space-y-4 pt-2">
+                            <!-- PM Bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span class="text-blue-700 flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 bg-blue-600 rounded-sm"></span> PM - Quản Trị Dự Án (Project Manager)
+                                    </span>
+                                    <span id="pm-pct" class="font-bold font-mono">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
+                                    <div id="pm-bar" class="bg-blue-600 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <!-- PO Bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span class="text-indigo-700 flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 bg-indigo-600 rounded-sm"></span> PO - Quản Trị Sản Phẩm (Product Owner)
+                                    </span>
+                                    <span id="po-pct" class="font-bold font-mono">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
+                                    <div id="po-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <!-- SA Bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span class="text-purple-700 flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 bg-purple-600 rounded-sm"></span> SA - Kiến Trúc Sư Hệ Thống (System Architect)
+                                    </span>
+                                    <span id="sa-pct" class="font-bold font-mono">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
+                                    <div id="sa-bar" class="bg-purple-600 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Analysis Paragraphs -->
+                    <div class="border-t border-slate-150 pt-6 grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                            <h5 class="font-bold text-slate-900 text-sm flex items-center gap-2 mb-3">
+                                🧠 Phân Tích Logic & Giải Quyết Vấn Đề
+                            </h5>
+                            <p class="text-xs md:text-sm text-slate-600 leading-relaxed" id="res-logic-analysis">
+                                Nội dung phân tích khả năng tư duy logic và tiềm năng dựa vào điểm bài thi logic GMAT của thí sinh.
+                            </p>
+                        </div>
+                        <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                            <h5 class="font-bold text-slate-900 text-sm flex items-center gap-2 mb-3">
+                                🚀 Khuyến Nghị Lộ Trình Đào Tạo
+                            </h5>
+                            <p class="text-xs md:text-sm text-slate-600 leading-relaxed" id="res-training-pathway">
+                                Khuyến nghị lộ trình đào tạo chuyên biệt dựa trên sự kết hợp hoàn hảo giữa kỹ năng tính cách thực tế và khả năng xử lý bài toán logic thực tế.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- REVIEW DETAILED ANSWERS -->
+                    <div class="border-t border-slate-150 pt-6">
+                        <h4 class="font-bold text-slate-900 text-base mb-4 flex items-center gap-1.5">
+                            🔍 Xem Lại & Đối Chiếu Chi Tiết Phần Tư Duy Logic
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-4">Các câu trả lời đúng được đánh dấu bằng màu xanh lá, câu trả lời sai được đánh dấu màu đỏ kèm theo lời giải thích chuyên môn chi tiết.</p>
+                        
+                        <div class="space-y-4" id="answers-review-list">
+                            <!-- Injected dynamically on completion -->
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="border-t border-slate-150 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <p class="text-xs text-gray-400">Kết quả này được tạo tự động bởi hệ thống đánh giá tuyển sinh năng lực quốc tế.</p>
+                        <div class="flex gap-3 w-full sm:w-auto">
+                            <button onclick="resetAssessment()" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-5 rounded-xl text-xs transition-all">
+                                Thực hiện lại ↺
+                            </button>
+                            <button onclick="window.print()" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl text-xs transition-all flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                In kết quả tuyển sinh
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- QUESTION DATABASES IN JAVASCRIPT -->
+    <script>
+        // Pool of 20 Personality Trios (SHL OPQ Style)
+        const PERSONALITY_POOL = [
+            {
+                id: "p1",
+                theme: "Mục Tiêu & Tiếp Cận Công Việc",
+                statements: [
+                    { text: "Tôi thích theo đuổi các ý tưởng sáng tạo, thấu hiểu tột cùng hành vi người tiêu dùng và tối đa hóa giá trị cốt lõi của sản phẩm.", role: "PO" },
+                    { text: "Tôi thích bóc tách các vấn đề hệ thống phức tạp, xây dựng cấu trúc logic bền vững và bảo đảm tính toàn vẹn của dữ liệu.", role: "SA" },
+                    { text: "Tôi ưu tiên việc quản trị kế hoạch chặt chẽ, kiểm soát tiến độ, điều phối các nguồn lực nhằm đảm bảo dự án về đích đúng hạn.", role: "PM" }
+                ]
+            },
+            {
+                id: "p2",
+                theme: "Xử Lý Thay Đổi Của Khách Hàng",
+                statements: [
+                    { text: "Tôi ưu tiên rà soát ngay tác động hệ thống hạ tầng và thiết kế lại sơ đồ cơ sở dữ liệu để đảm bảo tính an toàn dài hạn.", role: "SA" },
+                    { text: "Tôi lập tức cập nhật lại Gantt Chart, đánh giá lại năng suất của các lập trình viên để đưa ra dự báo ngày bàn giao mới.", role: "PM" },
+                    { text: "Tôi sẽ trực tiếp trao đổi với khách hàng xem thay đổi này có thực sự tạo ra đột phá về doanh số hoặc trải nghiệm người dùng không.", role: "PO" }
+                ]
+            },
+            {
+                id: "p3",
+                theme: "Động Lực Thúc Đẩy Bản Thân",
+                statements: [
+                    { text: "Sự thán phục của đội ngũ khi tôi giải quyết thành công một lỗi hệ thống hoặc lỗ hổng bảo mật cực kỳ khó nhằn.", role: "SA" },
+                    { text: "Niềm hạnh phúc khi nhìn thấy biểu đồ tiến độ dự án chạy mượt mà và toàn bộ nhóm cán đích an toàn đúng cam kết.", role: "PM" },
+                    { text: "Sự phấn khích khi sản phẩm ra mắt thị trường đạt số lượng người dùng vượt trội và nhận được cơn mưa lời khen.", role: "PO" }
+                ]
+            },
+            {
+                id: "p4",
+                theme: "Đối Diện Với Xung Đột Nhóm",
+                statements: [
+                    { text: "Tôi làm cầu nối trung gian, tổ chức thương lượng tiến độ và điều chuyển nhân sự để giảm bớt áp lực căng thẳng cho các bên.", role: "PM" },
+                    { text: "Tôi lấy tài liệu đặc tả sản phẩm và hành trình trải nghiệm người dùng làm kim chỉ nam để giải quyết bất đồng mục tiêu.", role: "PO" },
+                    { text: "Tôi dựa trên các phân tích logic kỹ thuật, hiệu năng phần cứng và nguyên tắc thiết kế khách quan để hòa giải mâu thuẫn.", role: "SA" }
+                ]
+            },
+            {
+                id: "p5",
+                theme: "Lựa Chọn Công Nghệ Mới",
+                statements: [
+                    { text: "Tôi đánh giá kỹ lưỡng khả năng tích hợp, cấu trúc mở rộng, tính chịu tải và vòng đời bảo mật của công nghệ.", role: "SA" },
+                    { text: "Tôi đo lường thời gian huấn luyện nhóm, chi phí tài nguyên phần cứng, rủi ro trễ hạn của các module hiện tại.", role: "PM" },
+                    { text: "Tôi phân tích xem công nghệ đó giúp đẩy nhanh tiến độ đưa sản phẩm ra thị trường (Time-to-market) như thế nào.", role: "PO" }
+                ]
+            },
+            {
+                id: "p6",
+                theme: "Phong Cách Giao Tiếp Stakeholders",
+                statements: [
+                    { text: "Sử dụng những câu chuyện trải nghiệm người dùng, giá trị kinh doanh thực tiễn để truyền cảm hứng về định hướng tương lai.", role: "PO" },
+                    { text: "Sử dụng các báo cáo đo lường, biểu đồ KPI, tiến độ phần trăm và danh sách rủi ro đã được cập nhật cụ thể.", role: "PM" },
+                    { text: "Sử dụng các lưu đồ kỹ thuật, sơ đồ kiến trúc tích hợp hệ thống và cấu trúc dữ liệu minh bạch, chặt chẽ.", role: "SA" }
+                ]
+            },
+            {
+                id: "p7",
+                theme: "Đo Lường Thành Công Dự Án",
+                statements: [
+                    { text: "Hệ thống vận hành ổn định 99.99%, không có downtime, bảo mật tuyệt đối và dễ dàng nâng cấp bảo trì.", role: "SA" },
+                    { text: "Dự án bàn giao đúng hạn (On-time), đạt chuẩn chất lượng (On-quality) và nằm trong phạm vi ngân sách (On-budget).", role: "PM" },
+                    { text: "Chỉ số hài lòng khách hàng (CSAT) tăng cao, tỷ lệ giữ chân khách hàng (Retention) và doanh thu sản phẩm bùng nổ.", role: "PO" }
+                ]
+            },
+            {
+                id: "p8",
+                theme: "Khi Đối Mặt Với Rủi Ro Ngân Sách",
+                statements: [
+                    { text: "Tôi sẽ tối ưu hóa phân rã công việc (WBS), đàm phán lại thời gian làm thêm giờ của nhân sự để cắt giảm lãng phí quy trình.", role: "PM" },
+                    { text: "Tôi rà soát lại kiến trúc hệ thống, đề xuất chuyển đổi sang giải pháp Cloud Server có chi phí tối ưu hơn.", role: "SA" },
+                    { text: "Tôi rà soát lại Backlog, lược bỏ bớt các tính năng chưa thiết yếu để tập trung nguồn lực xây dựng MVP chất lượng.", role: "PO" }
+                ]
+            },
+            {
+                id: "p9",
+                theme: "Cách Xây Dựng Kế Hoạch Làm Việc",
+                statements: [
+                    { text: "Xây dựng các cột mốc quan trọng (Milestones), phân bổ nhân sự rõ ràng và dự báo các kịch bản rủi ro để chuẩn bị trước.", role: "PM" },
+                    { text: "Vẽ sơ đồ phân cấp cấu trúc hệ thống, phân rã luồng truyền tải thông tin và chuẩn hóa đầu ra các API.", role: "SA" },
+                    { text: "Vẽ sơ đồ hành trình khách hàng (User Journey), định hình tầm nhìn sản phẩm trong 1-2 năm tới dựa trên nhu cầu thị trường.", role: "PO" }
+                ]
+            },
+            {
+                id: "p10",
+                theme: "Khảo Sát Thực Tế & Nghiên Cứu",
+                statements: [
+                    { text: "Thích đọc các báo cáo phân tích thị trường, nghiên cứu đối thủ cạnh tranh và trực tiếp quan sát thói quen của người dùng.", role: "PO" },
+                    { text: "Thích phân tích các báo cáo hiệu năng hệ thống, tìm hiểu các xu hướng cấu trúc hạ tầng mới nhất trên thế giới.", role: "SA" },
+                    { text: "Thích rà soát các bài học kinh nghiệm từ dự án trước, tối ưu hóa quy trình làm việc nhóm (Scrum/Agile).", role: "PM" }
+                ]
+            },
+            {
+                id: "p11",
+                theme: "Đối Phó Với Tải Hệ Thống Tăng Vọt",
+                statements: [
+                    { text: "Thương thảo với khách hàng tạm thời đóng bớt một số tính năng phụ để duy trì sự mượt mà cho tính năng cốt lõi.", role: "PO" },
+                    { text: "Thiết lập cấu trúc cân bằng tải, thiết kế cơ chế lưu trữ đệm (Caching) và tối ưu hóa câu lệnh cơ sở dữ liệu để vá dứt điểm.", role: "SA" },
+                    { text: "Nhanh chóng huy động lực lượng trực khẩn cấp 24/7, cập nhật tình hình xử lý sự cố liên tục cho các bên liên quan.", role: "PM" }
+                ]
+            },
+            {
+                id: "p12",
+                theme: "Quan Điểm Về Chất Lượng Sản Phẩm",
+                statements: [
+                    { text: "Mọi dòng code phải được tối ưu, sạch sẽ, tuân thủ các nguyên lý thiết kế bền vững (SOLID, Clean Architecture).", role: "SA" },
+                    { text: "Sản phẩm được kiểm thử kỹ càng qua các vòng QC nghiêm ngặt, không có lỗi nghiêm trọng (Critical bugs) when bàn giao.", role: "PM" },
+                    { text: "Sản phẩm có trải nghiệm người dùng trực quan, giải quyết chính xác nỗi đau (Pain points) của khách hàng mục tiêu.", role: "PO" }
+                ]
+            },
+            {
+                id: "p13",
+                theme: "Định Hướng Giải Quyết Sự Cố",
+                statements: [
+                    { text: "Lập tức khoanh vùng ảnh hưởng, thông báo kịch bản ứng phó cho khách hàng để giữ vững uy tín thương hiệu.", role: "PM" },
+                    { text: "Đi sâu phân tích nhật ký hoạt động hệ thống (Log file) để tìm ra nguồn gốc sâu xa gây lỗi, thay vì vá tạm thời.", role: "SA" },
+                    { text: "Khảo sát nhanh phản hồi của nhóm người dùng bị ảnh hưởng để thiết kế lại luồng chức năng tối ưu hơn.", role: "PO" }
+                ]
+            },
+            {
+                id: "p14",
+                theme: "Phát Triển Đội Ngũ Nhân Sự",
+                statements: [
+                    { text: "Truyền lửa cho lập trình viên bằng những câu chuyện thực tế về sứ mệnh sản phẩm giúp thay đổi cuộc sống người dùng.", role: "PO" },
+                    { text: "Tổ chức các buổi đào tạo chuyên môn về giải thuật, cách thức thiết kế hệ thống có tính chịu tải cao.", role: "SA" },
+                    { text: "Hướng dẫn các phương pháp quản lý thời gian, nâng cao năng suất cá nhân và kỹ năng phối hợp làm việc nhóm hiệu quả.", role: "PM" }
+                ]
+            },
+            {
+                id: "p15",
+                theme: "Thái Độ Khi Nhận Ý Kiến Trái Chiều",
+                statements: [
+                    { text: "Tôi xem xét dựa trên lăng kính logic và thông số kỹ thuật thực tế để đánh giá sự hợp lý của ý kiến phản hồi.", role: "SA" },
+                    { text: "Tôi xem xét dựa trên dữ liệu phản hồi thực tế của người dùng và các chỉ số kinh doanh thu thập được.", role: "PO" },
+                    { text: "Tôi dung hòa các quan điểm khác nhau, tìm kiếm phương án tối ưu nhất để tránh làm ảnh hưởng tới tiến độ của nhóm.", role: "PM" }
+                ]
+            },
+            {
+                id: "p16",
+                theme: "Tổ Chức Quy Trình Làm Việc",
+                statements: [
+                    { text: "Tập trung tối ưu hóa các điểm nghẽn trong quy trình bàn giao (Kanban/Sprint), đo lường vận tốc của nhóm.", role: "PM" },
+                    { text: "Thiết lập quy trình chuẩn hóa định dạng dữ liệu API, cơ chế đồng bộ hóa luồng thông tin giữa các dịch vụ.", role: "SA" },
+                    { text: "Thiết lập quy trình thu thập ý kiến người dùng liên tục để kiểm thử nhanh giả thuyết sản phẩm mới.", role: "PO" }
+                ]
+            },
+            {
+                id: "p17",
+                theme: "Sử Dụng Trí Tuệ Nhân Tạo (AI) Trong Dự Án",
+                statements: [
+                    { text: "Tận dụng AI để tự động hóa viết mã nguồn, thiết kế hạ tầng thông minh và giám sát lỗi tự động 24/7.", role: "SA" },
+                    { text: "Sử dụng AI để phân tích xu hướng hành vi khách hàng, cá nhân hóa trải nghiệm và tối ưu hóa tính năng sản phẩm.", role: "PO" },
+                    { text: "Ứng dụng AI để phân tích rủi ro, dự báo tiến độ bàn giao và tự động hóa các tác vụ quản lý báo cáo lặp lại.", role: "PM" }
+                ]
+            },
+            {
+                id: "p18",
+                theme: "Quản Lý Tài Nguyên Đội Ngũ",
+                statements: [
+                    { text: "Đảm bảo phân chia công việc công bằng, không ai bị quá tải và cân bằng giữa công việc với cuộc sống.", role: "PM" },
+                    { text: "Ưu tiên phân phối nguồn lực kỹ sư giỏi nhất để xây dựng bộ khung nền tảng hạ tầng cốt lõi trước.", role: "SA" },
+                    { text: "Điều chỉnh nguồn lực tập trung vào những tính năng tạo ra giá trị kinh doanh lớn nhất ngay lập tức.", role: "PO" }
+                ]
+            },
+            {
+                id: "p19",
+                theme: "Khi Đối Mặt Với Áp Lực Tiến Độ",
+                statements: [
+                    { text: "Tôi duy trì sự bình tĩnh, lập kế hoạch tăng ca ngắn hạn hợp lý và động viên tinh thần chiến đấu của cả đội.", role: "PM" },
+                    { text: "Tôi rà soát tinh giản tối đa các thành phần kiến trúc phức tạp chưa cần thiết để hệ thống chạy được trước.", role: "SA" },
+                    { text: "Tôi đàm phán với khách hàng để cắt giảm bớt các yêu cầu phức tạp, cam kết bàn giao các tính năng cốt lõi hoạt động tốt.", role: "PO" }
+                ]
+            },
+            {
+                id: "p20",
+                theme: "Khởi Động Dự Án Mới",
+                statements: [
+                    { text: "Xây dựng ngay tài liệu tầm nhìn sản phẩm (Product Vision Statement) và thiết kế lộ trình (Product Roadmap).", role: "PO" },
+                    { text: "Định hình kiến trúc hệ thống tổng quan, vẽ biểu đồ luồng dữ liệu sơ bộ và lựa chọn các công nghệ cốt lõi.", role: "SA" },
+                    { text: "Tổ chức buổi họp khởi động (Kick-off), thống nhất cách phối hợp, phân vai trò trách nhiệm và thiết lập kênh liên lạc.", role: "PM" }
+                ]
+            }
+        ];
+
+        // Pool of Logical Questions (containing standard texts & multiple Drag-and-drop Visual Matrices)
+        const LOGICAL_POOL = [
+            // ================= VISUAL QUESTIONS =================
+            {
+                id: "v1",
+                type: "visual",
+                category: "Logic Ma Trận Hình Ảnh (Xoay góc)",
+                question: "Hãy quan sát quy luật xoay góc của đoạn thẳng bên trong hình tròn ở ma trận 3x3 dưới đây. Đoạn thẳng xoay theo chiều kim đồng hồ qua từng cột. Hãy chọn mảnh ghép phù hợp cho ô trống còn thiếu ở góc phải dưới cùng.",
+                correct: "A",
+                isVisual: true,
+                matrix: [
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="3"/></svg>', // 90 deg
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="16" y1="16" x2="44" y2="44" stroke="#1e293b" stroke-width="3"/></svg>', // 45 deg
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="3"/></svg>', // 0 deg
+                    
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="16" y1="44" x2="44" y2="16" stroke="#1e293b" stroke-width="3"/></svg>', // 135 deg
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="3"/></svg>', // 90 deg
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="16" y1="16" x2="44" y2="44" stroke="#1e293b" stroke-width="3"/></svg>', // 45 deg
+                    
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="3"/></svg>', // 0 deg
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="16" y1="44" x2="44" y2="16" stroke="#1e293b" stroke-width="3"/></svg>', // 135 deg
+                    null // target
+                ],
+                options: [
+                    { key: "A", text: "Hình tròn chứa một đường thẳng đứng thẳng (Xoay tiếp 45 độ từ 135 độ)", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/><line x1="30" y1="10" x2="30" y2="50" stroke="#2563eb" stroke-width="3"/></svg>' },
+                    { key: "B", text: "Hình tròn chứa đường chéo lệch trái", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/><line x1="16" y1="16" x2="44" y2="44" stroke="#2563eb" stroke-width="3"/></svg>' },
+                    { key: "C", text: "Hình tròn chứa một đường nằm ngang hoàn toàn", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/><line x1="10" y1="30" x2="50" y2="30" stroke="#2563eb" stroke-width="3"/></svg>' },
+                    { key: "D", text: "Hình tròn rỗng không chứa đường nào bên trong", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/></svg>' }
+                ],
+                explanation: "Quy luật xoay góc liên tục 45 độ theo chiều kim đồng hồ qua từng ô. Ô cuối cùng tiếp tục xoay 45 độ từ góc 135 độ (đường chéo lên bên trái) để trở về góc 90 độ (đường thẳng đứng hoàn hảo). Đáp án đúng là A."
+            },
+            {
+                id: "v2",
+                type: "visual",
+                category: "Logic Ma Trận Hình Ảnh (Số Lượng & Hình Học)",
+                question: "Hãy tìm quy luật kết hợp giữa Khung Ngoài (Hàng 2) và Số Lượng Chấm Tròn Bên Trong (Hàng 1) để cấu thành các hình ở Hàng 3. Xác định mảnh ghép còn thiếu ở dấu chấm hỏi.",
+                correct: "A",
+                isVisual: true,
+                matrix: [
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="4" fill="#1e293b"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="20" cy="30" r="4" fill="#1e293b"/><circle cx="40" cy="30" r="4" fill="#1e293b"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="15" cy="30" r="4" fill="#1e293b"/><circle cx="30" cy="30" r="4" fill="#1e293b"/><circle cx="45" cy="30" r="4" fill="#1e293b"/></svg>',
+                    
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="15" y="15" width="30" height="30" fill="none" stroke="#1e293b" stroke-width="2"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="16" fill="none" stroke="#1e293b" stroke-width="2"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><polygon points="30,12 12,46 48,46" fill="none" stroke="#1e293b" stroke-width="2"/></svg>',
+                    
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="15" y="15" width="30" height="30" fill="none" stroke="#1e293b" stroke-width="2"/><circle cx="30" cy="30" r="4" fill="#1e293b"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="16" fill="none" stroke="#1e293b" stroke-width="2"/><circle cx="20" cy="30" r="4" fill="#1e293b"/><circle cx="40" cy="30" r="4" fill="#1e293b"/></svg>',
+                    null
+                ],
+                options: [
+                    { key: "A", text: "Mảnh ghép tam giác chứa chính xác 3 chấm tròn nằm ngang bên trong.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><polygon points="30,12 12,46 48,46" fill="none" stroke="#2563eb" stroke-width="2"/><circle cx="20" cy="35" r="3" fill="#2563eb"/><circle cx="30" cy="35" r="3" fill="#2563eb"/><circle cx="40" cy="35" r="3" fill="#2563eb"/></svg>' },
+                    { key: "B", text: "Mảnh ghép hình vuông có chứa 3 chấm tròn.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><rect x="15" y="15" width="30" height="30" fill="none" stroke="#2563eb" stroke-width="2"/><circle cx="20" cy="30" r="3" fill="#2563eb"/><circle cx="30" cy="30" r="3" fill="#2563eb"/><circle cx="40" cy="30" r="3" fill="#2563eb"/></svg>' },
+                    { key: "C", text: "Mảnh ghép tam giác rỗng không có chấm tròn nào.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><polygon points="30,12 12,46 48,46" fill="none" stroke="#2563eb" stroke-width="2"/></svg>' },
+                    { key: "D", text: "Mảnh ghép hình tròn chứa 1 chấm tròn duy nhất ở chính giữa tâm.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="15" fill="none" stroke="#2563eb" stroke-width="2"/><circle cx="30" cy="30" r="3" fill="#2563eb"/></svg>' }
+                ],
+                explanation: "Quy luật ma trận 3x3: Hình ở Hàng 3 kế thừa Khung ngoài của Hàng 2 tương ứng tại cột đó, và kế thừa Số lượng chấm của Hàng 1 tại cột đó. Vì vậy, ô cuối cùng phải có Khung ngoài hình tam giác (cột 3 hàng 2) và chứa 3 chấm (cột 3 hàng 1). Đáp án đúng là A."
+            },
+            {
+                id: "v3",
+                type: "visual",
+                category: "Logic Ma Trận Hình Ảnh (Lớp Phủ Tăng Tiến)",
+                question: "Hãy tìm quy luật về kích thước và màu tô phủ của hình nhỏ bên trong khung hình lớn qua từng hàng và cột. Hãy chọn mảnh ghép phù hợp nhất để kéo thả vào dấu hỏi.",
+                correct: "C",
+                isVisual: true,
+                matrix: [
+                    // Row 1: Large Triangle + Small Circle (Empty, Semi, Full)
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><polygon points="30,8 10,48 50,48" fill="none" stroke="#1e293b" stroke-width="2"/><circle cx="30" cy="33" r="6" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><polygon points="30,8 10,48 50,48" fill="none" stroke="#1e293b" stroke-width="2"/><path d="M 30,27 A 6,6 0 0,1 30,39 Z" fill="#1e293b"/><circle cx="30" cy="33" r="6" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><polygon points="30,8 10,48 50,48" fill="none" stroke="#1e293b" stroke-width="2"/><circle cx="30" cy="33" r="6" fill="#1e293b"/></svg>',
+                    
+                    // Row 2: Large Square + Small Triangle (Empty, Semi, Full)
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><polygon points="30,22 22,38 38,38" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><polygon points="30,22 22,38 30,38" fill="#1e293b"/><polygon points="30,22 22,38 38,38" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><polygon points="30,22 22,38 38,38" fill="#1e293b"/></svg>',
+                    
+                    // Row 3: Large Circle + Small Square (Empty, Semi, [Full])
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><rect x="23" y="23" width="14" height="14" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#1e293b" stroke-width="2"/><rect x="23" y="23" width="7" height="14" fill="#1e293b"/><rect x="23" y="23" width="14" height="14" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    null
+                ],
+                options: [
+                    { key: "A", text: "Vòng tròn lớn có hình vuông nhỏ trống bên trong.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/><rect x="23" y="23" width="14" height="14" fill="none" stroke="#2563eb" stroke-width="1.5"/></svg>' },
+                    { key: "B", text: "Vòng tròn lớn có hình vuông nhỏ được tô nửa đen bên trái.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/><rect x="23" y="23" width="7" height="14" fill="#2563eb"/><rect x="23" y="23" width="14" height="14" fill="none" stroke="#2563eb" stroke-width="1.5"/></svg>' },
+                    { key: "C", text: "Vòng tròn lớn có hình vuông nhỏ được tô đen hoàn toàn.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" fill="none" stroke="#2563eb" stroke-width="2"/><rect x="23" y="23" width="14" height="14" fill="#2563eb"/></svg>' },
+                    { key: "D", text: "Hình tam giác có hình tròn nhỏ tô đen hoàn toàn.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><polygon points="30,8 10,48 50,48" fill="none" stroke="#2563eb" stroke-width="2"/><circle cx="30" cy="33" r="6" fill="#2563eb"/></svg>' }
+                ],
+                explanation: "Quy luật biến đổi lớp phủ: Theo hàng ngang, hình nhỏ bên trong biến đổi trạng thái tô màu từ: Rỗng -> Tô một nửa -> Tô hoàn toàn. Do đó, ô thứ 3 ở hàng 3 phải là vòng tròn lớn chứa hình vuông nhỏ được tô đặc hoàn toàn. Đáp án đúng là C."
+            },
+            {
+                id: "v4",
+                type: "visual",
+                category: "Logic Ma Trận Hình Ảnh (Phép Cộng Nét Vẽ XOR)",
+                question: "Hãy phân tích logic biến đổi nét vẽ: Nét của Hình 3 bằng nét của Hình 1 cộng với Hình 2 (sau khi triệt tiêu các nét trùng nhau - logic XOR). Tìm mảnh ghép đúng để đặt vào dấu '?'.",
+                correct: "D",
+                isVisual: true,
+                matrix: [
+                    // Row 1: Line Left + Line Right = Both Lines
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="3"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="3"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="3"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="3"/></svg>',
+                    
+                    // Row 2: Top Line + Bottom Line = Both Lines
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="3"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="3"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="3"/><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="3"/></svg>',
+                    
+                    // Row 3: Diagonal Up-Left + Diagonal Up-Right = Cross X
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="15" y1="15" x2="45" y2="45" stroke="#1e293b" stroke-width="3"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><line x1="15" y1="45" x2="45" y2="15" stroke="#1e293b" stroke-width="3"/></svg>',
+                    null
+                ],
+                options: [
+                    { key: "A", text: "Đường thẳng đứng chạy song song", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><line x1="20" y1="10" x2="20" y2="50" stroke="#2563eb" stroke-width="3"/><line x1="40" y1="10" x2="40" y2="50" stroke="#2563eb" stroke-width="3"/></svg>' },
+                    { key: "B", text: "Đường chéo nghiêng về phía bên trái đơn độc", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><line x1="15" y1="15" x2="45" y2="45" stroke="#2563eb" stroke-width="3"/></svg>' },
+                    { key: "C", text: "Đường thẳng nằm ngang", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><line x1="10" y1="30" x2="50" y2="30" stroke="#2563eb" stroke-width="3"/></svg>' },
+                    { key: "D", text: "Hình chữ X hoàn chỉnh cấu thành từ việc gộp 2 nét chéo nhau.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><line x1="15" y1="15" x2="45" y2="45" stroke="#2563eb" stroke-width="3"/><line x1="15" y1="45" x2="45" y2="15" stroke="#2563eb" stroke-width="3"/></svg>' }
+                ],
+                explanation: "Quy luật phép cộng XOR nét vẽ: Hình thứ 3 bằng hình 1 kết hợp hình 2. Do không có nét nào trùng lập để triệt tiêu, ô thứ 3 của hàng 3 chính là phép gộp 2 nét chéo thành một chữ 'X' hoàn mỹ. Đáp án đúng là D."
+            },
+            {
+                id: "v5",
+                type: "visual",
+                category: "Logic Ma Trận Hình Ảnh (Chu Kỳ Hướng Mũi Tên)",
+                question: "Hãy phân tích quy luật chuyển động tuần hoàn hướng mũi tên trong ô lưới 3x3. Tìm mảnh ghép mũi tên thích hợp để lắp vào vị trí còn thiếu.",
+                correct: "B",
+                isVisual: true,
+                matrix: [
+                    // Row 1: UP, RIGHT, DOWN
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M30,50 L30,10 M20,20 L30,10 L40,20" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M10,30 L50,30 M40,20 L50,30 L40,40" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M30,10 L30,50 M20,40 L30,50 L40,40" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    
+                    // Row 2: LEFT, UP, RIGHT
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M50,30 L10,30 M20,20 L10,30 L20,40" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M30,50 L30,10 M20,20 L30,10 L40,20" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M10,30 L50,30 M40,20 L50,30 L40,40" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    
+                    // Row 3: DOWN, LEFT, [UP]
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M30,10 L30,50 M20,40 L30,50 L40,40" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><path d="M50,30 L10,30 M20,20 L10,30 L20,40" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    null
+                ],
+                options: [
+                    { key: "A", text: "Mũi tên chỉ hướng xuống (DOWN)", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><path d="M30,10 L30,50 M20,40 L30,50 L40,40" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+                    { key: "B", text: "Mũi tên hướng thẳng lên trời (UP - Hoàn tất chu kỳ xoay góc)", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><path d="M30,50 L30,10 M20,20 L30,10 L40,20" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+                    { key: "C", text: "Mũi tên chỉ hướng bên phải (RIGHT)", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><path d="M10,30 L50,30 M40,20 L50,30 L40,40" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+                    { key: "D", text: "Mũi tên chỉ hướng bên trái (LEFT)", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><path d="M50,30 L10,30 M20,20 L10,30 L20,40" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' }
+                ],
+                explanation: "Quy luật hướng dịch chuyển mũi tên xoay 90 độ theo chiều kim đồng hồ: Hàng 1 (Lên -> Phải -> Xuống). Hàng 2 (Trái -> Lên -> Phải). Hàng 3 (Xuống -> Trái -> [Lên]). Vì vậy phần tử thiếu phải là mũi tên hướng Lên. Đáp án đúng là B."
+            },
+            {
+                id: "v6",
+                type: "visual",
+                category: "Logic Ma Trận Hình Ảnh (Giao Thoa Phép Cắt Sét)",
+                question: "Hãy phân tích quy luật của các đường sọc lưới trong hình vuông ở ma trận 3x3 dưới đây. Quy luật đan xen: Sọc dọc, Sọc ngang, và Lưới đan xen (Sọc dọc kết hợp sọc ngang). Tìm mảnh ghép còn thiếu.",
+                correct: "C",
+                isVisual: true,
+                matrix: [
+                    // Row 1: Vertical lines, Horizontal lines, Grid lines
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    
+                    // Row 2: Horizontal lines, Grid lines, Vertical lines
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    
+                    // Row 3: Grid lines, Vertical lines, [Horizontal lines]
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="20" x2="50" y2="20" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    '<svg width="45" height="45" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#1e293b" stroke-width="1.5"/></svg>',
+                    null
+                ],
+                options: [
+                    { key: "A", text: "Khung vuông rỗng không có sọc kẻ nào.", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#2563eb" stroke-width="2"/></svg>' },
+                    { key: "B", text: "Khung vuông chứa sọc dọc", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#2563eb" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#2563eb" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#2563eb" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#2563eb" stroke-width="1.5"/></svg>' },
+                    { key: "C", text: "Khung vuông chứa sọc nằm ngang (Thành phần còn thiếu để cấu thành cặp sọc lưới).", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#2563eb" stroke-width="2"/><line x1="10" y1="20" x2="50" y2="20" stroke="#2563eb" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#2563eb" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#2563eb" stroke-width="1.5"/></svg>' },
+                    { key: "D", text: "Khung vuông chứa họa tiết lưới đan ô vuông", svg: '<svg width="35" height="35" viewBox="0 0 60 60"><rect x="10" y="10" width="40" height="40" fill="none" stroke="#2563eb" stroke-width="2"/><line x1="20" y1="10" x2="20" y2="50" stroke="#2563eb" stroke-width="1.5"/><line x1="30" y1="10" x2="30" y2="50" stroke="#2563eb" stroke-width="1.5"/><line x1="40" y1="10" x2="40" y2="50" stroke="#2563eb" stroke-width="1.5"/><line x1="10" y1="20" x2="50" y2="20" stroke="#2563eb" stroke-width="1.5"/><line x1="10" y1="30" x2="50" y2="30" stroke="#2563eb" stroke-width="1.5"/><line x1="10" y1="40" x2="50" y2="40" stroke="#2563eb" stroke-width="1.5"/></svg>' }
+                ],
+                explanation: "Quy luật bảo toàn phần tử theo hàng ngang và hàng dọc: Mỗi hàng và cột đều phải chứa đầy đủ 3 loại hình: Sọc dọc, Lưới ô vuông, và Sọc ngang. Ở hàng 3 đã có Lưới ô vuông (ô 1) và Sọc dọc (ô 2). Do đó, ô thứ 3 còn thiếu phải là hình vuông sọc ngang. Đáp án đúng là C."
+            },
+
+            // ================= STANDARD GMAT LOGICAL QUESTIONS =================
+            {
+                id: "l1",
+                type: "text",
+                category: "Phân Tích Dữ Liệu Kinh Doanh",
+                question: "Doanh thu của một sản phẩm SaaS trong năm 2024 tăng 25% so với năm 2023. Tuy nhiên, chi phí máy chủ hạ tầng trong năm 2024 lại tăng 40% so với năm 2023. Biết rằng trong năm 2023, doanh thu của sản phẩm gấp 4 lần chi phí máy chủ hạ tầng. Hỏi tỷ lệ lợi nhuận gộp (Doanh thu trừ Chi phí máy chủ / Doanh thu) của năm 2024 thay đổi thế nào so với năm 2023?",
+                options: [
+                    { key: "A", text: "Tăng 5.2%" },
+                    { key: "B", text: "Giảm 3.0%" },
+                    { key: "C", text: "Giảm 2.4%" },
+                    { key: "D", text: "Không thay đổi" }
+                ],
+                correct: "B",
+                explanation: "Đặt Chi phí máy chủ 2023 = 100 => Doanh thu 2023 = 400. Lợi nhuận gộp 2023 = (400 - 100)/400 = 75%. Năm 2024: Chi phí máy chủ = 140, Doanh thu = 400 * 1.25 = 500. Lợi nhuận gộp 2024 = (500 - 140)/500 = 72%. Thay đổi tuyệt đối: 72% - 75% = -3% (Giảm 3.0%)."
+            },
+            {
+                id: "l2",
+                type: "text",
+                category: "Tối Ưu Hóa Tài Nguyên Server",
+                question: "Có 3 luồng tác vụ độc lập chạy trên 1 server đơn nhân: Task X cần 4 phút chạy đem lại $12, Task Y cần 6 phút chạy đem lại $24, Task Z cần 3 phút chạy đem lại $10. Để tối đa hóa hiệu suất sinh lời trung bình theo thời gian (Lợi nhuận thu được trên mỗi phút chạy), bạn sắp xếp thứ tự thực thi các task ra sao?",
+                options: [
+                    { key: "A", text: "Task X -> Task Y -> Task Z" },
+                    { key: "B", text: "Task Y -> Task Z -> Task X" },
+                    { key: "C", text: "Task Z -> Task Y -> Task X" },
+                    { key: "D", text: "Task Y -> Task X -> Task Z" }
+                ],
+                correct: "B",
+                explanation: "Tính Lợi nhuận/Phút của từng tác vụ: Task X = $12/4ph = $3/phút; Task Y = $24/6ph = $4/phút; Task Z = $10/3ph = $3.33/phút. Thứ tự tối ưu giảm dần của tỷ suất sinh lời là: Y ($4) -> Z ($3.33) -> X ($3)."
+            },
+            {
+                id: "l3",
+                type: "text",
+                category: "Lý Thuyết Đồ Thị & Đường Đi",
+                question: "Hệ thống microservices gồm 5 service A, B, C, D, E. Đường truyền dữ liệu định tuyến một chiều hoạt động với độ trễ giao tiếp (ms) như sau: A->B (5ms), A->C (8ms), B->D (12ms), C->D (3ms), B->E (15ms), D->E (4ms). Hỏi con đường truyền tải dữ liệu có độ trễ tối thiểu để gửi gói tin từ A đến E mất bao nhiêu ms?",
+                options: [
+                    { key: "A", text: "15 ms" },
+                    { key: "B", text: "17 ms" },
+                    { key: "C", text: "20 ms" },
+                    { key: "D", text: "21 ms" }
+                ],
+                correct: "A",
+                explanation: "Có các con đường từ A đến E: 1) A->B->E = 5 + 15 = 20ms. 2) A->B->D->E = 5 + 12 + 4 = 21ms. 3) A->C->D->E = 8 + 3 + 4 = 15ms. Độ trễ tối thiểu là 15 ms thông qua đường A->C->D->E."
+            },
+            {
+                id: "l4",
+                type: "text",
+                category: "Tư Duy Giao Thoa Hệ Thống",
+                question: "Một cơ sở dữ liệu có 120 bảng thông tin. Trong đó, có 65 bảng chứa thông tin khách hàng cá nhân, 45 bảng chứa dữ liệu giao dịch tài chính trực tuyến, và 25 bảng chứa cả thông tin khách hàng lẫn dữ liệu giao dịch tài chính. Hỏi có bao nhiêu bảng cơ sở dữ liệu KHÔNG chứa bất kỳ thông tin nào trong hai loại dữ liệu trên?",
+                options: [
+                    { key: "A", text: "10 bảng" },
+                    { key: "B", text: "35 bảng" },
+                    { key: "C", text: "15 bảng" },
+                    { key: "D", text: "30 bảng" }
+                ],
+                correct: "B",
+                explanation: "Số lượng các bảng chứa thông tin khách hàng hoặc dữ liệu giao dịch là: 65 + 45 - 25 = 85 bảng. Số bảng không chứa loại dữ liệu nào là: 120 - 85 = 35 bảng."
+            },
+            {
+                id: "l5",
+                type: "text",
+                category: "Logic Ràng Buộc Vị Trí",
+                question: "Năm thành viên dự án: PM, PO, SA, TechLead, Designer ngồi họp bàn tròn 5 ghế được đánh số từ 1 đến 5 theo chiều kim đồng hồ. Biết rằng: PM ngồi cạnh TechLead; SA ngồi cạnh Designer; TechLead không ngồi cạnh SA. Nếu Designer ngồi ở ghế số 3 và SA ngồi ở ghế số 2, hỏi ghế số 5 chắc chắn do ai ngồi?",
+                options: [
+                    { key: "A", text: "PM" },
+                    { key: "B", text: "PO" },
+                    { key: "C", text: "TechLead" },
+                    { key: "D", text: "Không thể xác định" }
+                ],
+                correct: "C",
+                explanation: "Ghế 3 = Designer, Ghế 2 = SA. Các ghế còn lại là 1, 4, 5. Vì SA ngồi ghế 2, TechLead không ngồi cạnh SA nên TechLead không thể ngồi ở ghế 1. Vậy TechLead chỉ có thể ngồi ở ghế 4 hoặc 5. PM phải ngồi cạnh TechLead. Nếu TechLead ở ghế 4, PM ở ghế 5. Nếu TechLead ở ghế 5, PM ở ghế 4. Cấu hình duy nhất thỏa mãn là: Ghế 1 = PO, Ghế 5 = TechLead, Ghế 4 = PM. Ghế số 5 chắc chắn là TechLead."
+            },
+            {
+                id: "l6",
+                type: "text",
+                category: "Tính Toán Ước Lượng Tiến Độ",
+                question: "Một lập trình viên cao cấp làm việc độc lập cần trung bình 4 ngày để hoàn thành một chức năng phức tạp. Một lập trình viên trung cấp cần 8 ngày cho cùng chức năng đó. Nếu dự án có tổng cộng 6 chức năng phức tạp tương tự, và cả hai lập trình viên cùng phối hợp làm song song, hỏi họ sẽ hoàn thành toàn bộ khối lượng công việc sau bao nhiêu ngày?",
+                options: [
+                    { key: "A", text: "12 ngày" },
+                    { key: "B", text: "16 ngày" },
+                    { key: "C", text: "18 ngày" },
+                    { key: "D", text: "24 ngày" }
+                ],
+                correct: "B",
+                explanation: "Năng suất lập trình viên cao cấp = 1/4 chức năng/ngày. Năng suất trung cấp = 1/8 chức năng/ngày. Tổng năng suất khi làm chung = 1/4 + 1/8 = 3/8 chức năng/ngày. Số ngày để hoàn thành 6 chức năng = 6 / (3/8) = 6 * 8 / 3 = 16 ngày."
+            },
+            {
+                id: "l7",
+                type: "text",
+                category: "Xác Suất Lỗi Hệ Thống",
+                question: "Một cụm máy chủ gồm 2 server chạy song song dự phòng độc lập. Xác suất server thứ nhất bị quá tải trong giờ cao điểm là 15%, xác suất server thứ hai bị quá tải là 20%. Hỏi xác suất để hệ thống vận hành AN TOÀN (ít nhất một server không bị quá tải) tại thời điểm cao điểm là bao nhiêu %?",
+                options: [
+                    { key: "A", text: "97%" },
+                    { key: "B", text: "85%" },
+                    { key: "C", text: "95%" },
+                    { key: "D", text: "72%" }
+                ],
+                correct: "A",
+                explanation: "Hệ thống bị sập hoàn toàn (cả hai server cùng bị quá tải) có xác suất là: 15% * 20% = 0.15 * 0.20 = 0.03 (tức là 3%). Do đó, xác suất hệ thống vận hành an toàn = 100% - 3% = 97%."
+            },
+            {
+                id: "l8",
+                type: "text",
+                category: "Tư Duy Đại Số Logic Boolean",
+                question: "Một cổng logic an ninh mạng chỉ cho phép gói tin đi qua (cho kết quả True) khi mệnh đề logic sau đúng: (A OR B) AND (NOT C OR A). Cho biết gói tin đầu vào có giá trị biến đầu vào là: A = False, B = True, C = True. Hỏi kết quả đầu ra của cổng logic này là gì?",
+                options: [
+                    { key: "A", text: "True" },
+                    { key: "B", text: "False" },
+                    { key: "C", text: "Không thể xác định" },
+                    { key: "D", text: "Tùy thuộc vào băng thông" }
+                ],
+                correct: "B",
+                explanation: "Thay giá trị vào biểu thức: Vế 1: (A OR B) = (False OR True) = True. Vế 2: (NOT C OR A) = (NOT True OR False) = False. Thực hiện phép AND: True AND False = False."
+            },
+            {
+                id: "l9",
+                type: "text",
+                category: "Tối Ưu Hóa Chi Phí Dự Án",
+                question: "Doanh nghiệp đang phân vân giữa 2 phương án hạ tầng: Phương án Cloud (Không tốn chi phí cài đặt ban đầu, phí vận hành ổn định là $1,500/tháng) và Phương án On-Premise (Phí phần cứng ban đầu là $12,000, phí bảo trì vận hành là $500/tháng). Hỏi bắt đầu từ tháng thứ mấy trở đi thì việc chọn hạ tầng On-Premise sẽ tiết kiệm chi phí tổng cộng hơn Cloud?",
+                options: [
+                    { key: "A", text: "Tháng thứ 10" },
+                    { key: "B", text: "Tháng thứ 12" },
+                    { key: "C", text: "Tháng thứ 13" },
+                    { key: "D", text: "Tháng thứ 15" }
+                ],
+                correct: "C",
+                explanation: "Gọi x là số tháng. Tổng chi phí Cloud = 1500 * x. Tổng chi phí On-Premise = 12000 + 500 * x. On-Premise tiết kiệm hơn khi: 12000 + 500x < 1500x => 12000 < 1000x => x > 12. Vậy bắt đầu từ tháng thứ 13 trở đi, hạ tầng On-Premise có lợi thế chi phí thấp hơn."
+            },
+            {
+                id: "l10",
+                type: "text",
+                category: "Logic Phân Tích Chuỗi",
+                question: "Quan sát chuỗi ký tự quy trình kiểm thử phần mềm: Dev -> Unit Test -> Integration -> Security -> Deploy. Nếu hệ thống tự động hóa bỏ qua bước Security, tổng thời gian quy trình giảm 25%. Biết rằng thời gian cho Unit Test là 2 giờ, Integration là 3 giờ, các bước còn lại (Dev, Security, Deploy) có thời lượng bằng nhau. Hỏi bước Security bình thường chiếm mấy giờ?",
+                options: [
+                    { key: "A", text: "3 giờ" },
+                    { key: "B", text: "4 giờ" },
+                    { key: "C", text: "5 giờ" },
+                    { key: "D", text: "6 giờ" }
+                ],
+                correct: "C",
+                explanation: "Gọi thời gian của Dev, Security, Deploy là x giờ. Tổng thời gian bình thường = 3x + 5. Khi bỏ Security, tổng thời gian = 2x + 5. Ta có phương trình giảm 25%: (3x + 5) - (2x + 5) = 0.25 * (3x + 5) => x = 5. Vậy bước Security chiếm chính xác 5 giờ."
+            },
+            {
+                id: "l11",
+                type: "text",
+                category: "Lập Luận Phân Tích Logic",
+                question: "Trong một cuộc họp bàn thảo dự án, Trưởng nhóm phát biểu: 'Chỉ khi hệ thống đạt độ ổn định trên 98% và giao diện người dùng dễ thao tác thì sản phẩm mới có thể được cấp phép phát hành ra thị trường'. Phát biểu nào dưới đây diễn đạt chính xác kết luận hợp lý từ khẳng định trên?",
+                options: [
+                    { key: "A", text: "Nếu sản phẩm không được phát hành, chứng tỏ hệ thống chưa ổn định 98%." },
+                    { key: "B", text: "Nếu sản phẩm được phát hành ra thị trường, chắc chắn giao diện người dùng phải dễ thao tác." },
+                    { key: "C", text: "Chỉ cần hệ thống đạt độ ổn định trên 98%, sản phẩm ngay lập tức được phát hành." },
+                    { key: "D", text: "Nếu giao diện người dùng dễ thao tác, sản phẩm chắc chắn được phát hành." }
+                ],
+                correct: "B",
+                explanation: "Cấu trúc mệnh đề logic: 'Phát hành => Ổn định > 98% AND Giao diện dễ thao tác'. Do đó, nếu sản phẩm được phát hành thì bắt buộc giao diện người dùng phải dễ thao tác."
+            },
+            {
+                id: "l12",
+                type: "text",
+                category: "Quản Lý Chuỗi Cung Ứng Nhân Lực",
+                question: "Doanh nghiệp có 3 dự án công nghệ lớn chạy song song. Dự án 1 cần 4 kỹ sư, Dự án 2 cần 5 kỹ sư, Dự án 3 cần 6 kỹ sư. Doanh nghiệp hiện có tổng cộng 12 kỹ sư giàu kinh nghiệm. Hỏi có bao nhiêu cách để phân bổ nhân lực sao cho mọi dự án đều nhận được đủ số lượng kỹ sư cần thiết?",
+                options: [
+                    { key: "A", text: "Không có cách nào khả thi" },
+                    { key: "B", text: "6 cách" },
+                    { key: "C", text: "12 cách" },
+                    { key: "D", text: "1 cách duy nhất" }
+                ],
+                correct: "A",
+                explanation: "Tổng số lượng kỹ sư cần thiết để chạy đồng thời cả 3 dự án là: 4 + 5 + 6 = 15 kỹ sư. Tuy nhiên, doanh nghiệp hiện tại chỉ có 12 kỹ sư. Do đó, không có cách phân bổ đồng thời nào khả thi."
+            },
+            {
+                id: "l13",
+                type: "text",
+                category: "Tối Ưu Hóa Dung Lượng Bộ Nhớ",
+                question: "Một cơ sở dữ liệu lưu trữ hồ sơ người dùng. Mỗi người dùng cần 2 Kilobytes (KB) bộ nhớ thô. Cứ sau 1 năm, số lượng hồ sơ người dùng của công ty tăng gấp đôi. Biết hiện tại cơ sở dữ liệu đang lưu trữ 10,000 hồ sơ. Hỏi sau 3 năm nữa, dung lượng lưu trữ tối thiểu của cơ sở dữ liệu này là bao nhiêu Megabytes (MB)? (Cho biết 1 MB = 1000 KB)",
+                options: [
+                    { key: "A", text: "40 MB" },
+                    { key: "B", text: "80 MB" },
+                    { key: "C", text: "160 MB" },
+                    { key: "D", text: "320 MB" }
+                ],
+                correct: "C",
+                explanation: "Hiện tại: 10,000 hồ sơ. Sau 3 năm: 10,000 * 2^3 = 80,000 hồ sơ. Dung lượng bộ nhớ thô cần thiết: 80,000 * 2 KB = 160,000 KB. Đổi ra MB (với 1 MB = 1000 KB): 160,000 / 1000 = 160 MB."
+            },
+            {
+                id: "l14",
+                type: "text",
+                category: "Xếp Lịch Công Việc Tuần Tự",
+                question: "Dự án phát triển phần mềm gồm có 4 giai đoạn bắt buộc: Nghiên cứu, Thiết kế, Kiểm thử và Chỉnh sửa. Giai đoạn Chỉnh sửa phải diễn ra ngay sau giai đoạn Kiểm thử. Giai đoạn Thiết kế không thể bắt đầu trước khi hoàn thành Nghiên cứu. Hỏi có bao nhiêu thứ tự thực hiện tuần tự khả thi cho 4 giai đoạn này?",
+                options: [
+                    { key: "A", text: "2 thứ tự" },
+                    { key: "B", text: "3 thứ tự" },
+                    { key: "C", text: "4 thứ tự" },
+                    { key: "D", text: "1 thứ tự duy nhất" }
+                ],
+                correct: "B",
+                explanation: "Gọi các giai đoạn là N, T, K, C. Điều kiện: 1) K -> C (KC đi liền nhau). 2) N trước T (N < T). Các vị trí có thể có cho cụm KC: [KC, N, T] (không được vì N phải trước T), [N, KC, T], [N, T, KC], [KC, N, T] (sai), [(KC) ở đầu và N < T => KC, N, T]. Các thứ tự hợp lệ: N -> T -> KC, N -> KC -> T, KC -> N -> T. Tổng cộng có 3 thứ tự khả thi."
+            },
+            {
+                id: "l15",
+                type: "text",
+                category: "Lập Luận Phân Phối ROI",
+                question: "Doanh nghiệp đầu tư 100 triệu VNĐ vào chiến dịch tối ưu hóa SEO. Giả định rằng cứ mỗi 10 triệu VNĐ đầu tư sẽ giúp tăng thêm 2% tỷ lệ chuyển đổi khách hàng tiềm năng. Mỗi 1% tăng thêm của tỷ lệ chuyển đổi đem lại doanh thu trị giá 15 triệu VNĐ. Hỏi tỷ suất sinh lời của khoản đầu tư này (Lợi nhuận ròng/Vốn đầu tư) đạt bao nhiêu %?",
+                options: [
+                    { key: "A", text: "100%" },
+                    { key: "B", text: "150%" },
+                    { key: "C", text: "200%" },
+                    { key: "D", text: "250%" }
+                ],
+                correct: "C",
+                explanation: "Đầu tư 100 triệu tăng 20% tỷ lệ chuyển đổi. Doanh thu tăng thêm: 20 * 15 triệu = 300 triệu VNĐ. Lợi nhuận ròng thu về: 300 triệu - 100 triệu = 200 triệu VNĐ. Tỷ suất sinh lời ROI = 200 triệu / 100 triệu = 200%."
+            }
+        ];
+
+        // STATE OF ACTIVE TEST SESSION
+        let candName = "";
+        let candEmail = "";
+        let testTimerInterval = null;
+        let testTimeRemaining = 40 * 60; // 40 minutes in seconds
+        
+        // Final selection of 20 questions for each part
+        let testQuestionsPart1 = []; 
+        let testQuestionsPart2 = []; 
+        
+        // Storing user answers
+        let userAnswersPart1 = {}; // index -> { most: role, least: role }
+        let userAnswersPart2 = {}; // index -> selectedOptionKey ('A', 'B', 'C', 'D')
+        
+        let activePart = 1; // 1 = Personality, 2 = Logic
+        let activeQuestionIndex = 0; // 0 to 19
+
+        // UTILITY: Custom UI notification trigger
+        function showAlert(msg) {
+            const alertBox = document.getElementById('custom-alert');
+            const alertMsg = document.getElementById('custom-alert-msg');
+            alertMsg.innerText = msg;
+            alertBox.classList.remove('hidden');
+            setTimeout(() => {
+                alertBox.classList.remove('translate-x-full');
+            }, 50);
+            
+            // Auto close after 5 seconds
+            setTimeout(closeAlert, 5000);
+        }
+
+        function closeAlert() {
+            const alertBox = document.getElementById('custom-alert');
+            alertBox.classList.add('translate-x-full');
+            setTimeout(() => {
+                alertBox.classList.add('hidden');
+            }, 300);
+        }
+
+        // UTILITY: Fisher-Yates Shuffle Algorithm for deep randomization
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // INITIALIZE AND START TEST
+        function startAssessment() {
+            const name = document.getElementById('cand-name').value.trim();
+            const email = document.getElementById('cand-email').value.trim();
+            
+            if(!name || !email) {
+                showAlert('Vui lòng điền đầy đủ thông tin Họ tên và Email trước khi bắt đầu bài thi!');
+                return;
+            }
+
+            candName = name;
+            candEmail = email;
+
+            // Generate Randomized 20-Question Sets for both parts
+            // 1. Shuffling Personality statement trios
+            let rawPersonalityPool = JSON.parse(JSON.stringify(PERSONALITY_POOL));
+            shuffleArray(rawPersonalityPool);
+            testQuestionsPart1 = rawPersonalityPool.slice(0, 20); // Pick exactly 20
+
+            // 2. Shuffling Logical questions pool
+            let rawLogicalPool = JSON.parse(JSON.stringify(LOGICAL_POOL));
+            
+            // Ensure we have 20 high-quality unique items by generating procedurally if pool is less
+            while(rawLogicalPool.length < 20) {
+                rawLogicalPool.push({
+                    id: `l-extra-${rawLogicalPool.length}`,
+                    type: "text",
+                    category: "Tối Ưu Vận Hành Hệ Thống",
+                    question: `Hệ thống phân luồng yêu cầu có tốc độ xử lý tác vụ X là ${10 + rawLogicalPool.length} giây. Khi áp dụng thêm cơ chế đồng bộ tải mới, tốc độ xử lý nhanh hơn 20%. Hỏi thời gian xử lý mới là bao nhiêu?`,
+                    options: [
+                        { key: "A", text: `${((10 + rawLogicalPool.length) * 0.8).toFixed(1)} giây` },
+                        { key: "B", text: `${(10 + rawLogicalPool.length).toFixed(1)} giây` },
+                        { key: "C", text: `${((10 + rawLogicalPool.length) * 0.9).toFixed(1)} giây` },
+                        { key: "D", text: `${((10 + rawLogicalPool.length) * 0.5).toFixed(1)} giây` }
+                    ],
+                    correct: "A",
+                    explanation: "Tốc độ xử lý nhanh hơn 20% đồng nghĩa với việc thời gian xử lý chỉ còn lại 80% so với ban đầu. Nhân trực tiếp để ra đáp án."
+                });
+            }
+
+            shuffleArray(rawLogicalPool);
+            testQuestionsPart2 = rawLogicalPool.slice(0, 20); // Pick exactly 20
+
+            // Clear previous answers
+            userAnswersPart1 = {};
+            userAnswersPart2 = {};
+            activePart = 1;
+            activeQuestionIndex = 0;
+
+            // Transition UI View
+            document.getElementById('step-welcome').classList.add('hidden');
+            document.getElementById('assessment-container').classList.remove('hidden');
+            document.getElementById('test-timer-wrapper').classList.remove('hidden');
+
+            // Start clock countdown
+            startTimer();
+
+            // Render first question
+            renderCurrentQuestion();
+        }
+
+        // TEST COUNTDOWN TIMER LOGIC
+        function startTimer() {
+            testTimeRemaining = 40 * 60; // Reset to 40 mins
+            clearInterval(testTimerInterval);
+            
+            testTimerInterval = setInterval(() => {
+                testTimeRemaining--;
+                if(testTimeRemaining <= 0) {
+                    clearInterval(testTimerInterval);
+                    showAlert('Thời gian làm bài thi 40 phút đã kết thúc! Hệ thống đang tự động nộp bài.');
+                    forceAutoSubmit();
+                } else {
+                    const mins = Math.floor(testTimeRemaining / 60);
+                    const secs = testTimeRemaining % 60;
+                    document.getElementById('test-timer').innerText = 
+                        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    
+                    // Visual alert if less than 5 minutes left
+                    if(testTimeRemaining < 5 * 60) {
+                        const wrapper = document.getElementById('test-timer-wrapper');
+                        wrapper.classList.remove('bg-rose-900/40', 'text-rose-300');
+                        wrapper.classList.add('bg-rose-600', 'text-white', 'animate-bounce');
+                    }
+                }
+            }, 1000);
+        }
+
+        // RENDER CURRENT WIZARD QUESTION CARD
+        function renderCurrentQuestion() {
+            const questionTitle = document.getElementById('wizard-question-title');
+            const questionCategory = document.getElementById('wizard-category');
+            const bodyContent = document.getElementById('wizard-body-content');
+
+            // Generate progress bar stats
+            updateProgressBar();
+
+            // Render Dot Indicators
+            renderQuestionDots();
+
+            if(activePart === 1) {
+                // PART 1: PERSONALITY IPSATIVE VIEW
+                const qData = testQuestionsPart1[activeQuestionIndex];
+                questionTitle.innerText = `PHẦN 1: CÂU HỎI TỐ CHẤT ${activeQuestionIndex + 1} / 20`;
+                questionCategory.innerText = qData.theme;
+
+                const savedAnswer = userAnswersPart1[activeQuestionIndex] || { most: '', least: '' };
+
+                let html = `
+                    <div class="space-y-4">
+                        <div class="bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-3.5 text-xs">
+                            💡 Trong 3 mô tả hành vi làm việc dưới đây, hãy click chọn <strong>1 phát biểu Giống bạn nhất (Most)</strong> và <strong>1 phát biểu Ít giống bạn nhất (Least)</strong>.
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[500px] border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-150 text-slate-500 text-xs uppercase font-bold text-center">
+                                        <th class="text-left pb-3 font-semibold text-slate-700">Mô tả đặc điểm hành xử công việc</th>
+                                        <th class="pb-3 px-4 w-32 text-blue-600">Most (Giống nhất)</th>
+                                        <th class="pb-3 px-4 w-32 text-rose-600">Least (Ít nhất)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-xs md:text-sm">
+                `;
+
+                qData.statements.forEach((stmt, idx) => {
+                    const isMostChecked = savedAnswer.most === stmt.role ? 'checked' : '';
+                    const isLeastChecked = savedAnswer.least === stmt.role ? 'checked' : '';
+
+                    html += `
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="py-4 pr-4 text-slate-700 font-medium leading-relaxed">
+                                <span class="inline-block bg-slate-100 text-slate-600 rounded-md px-1.5 py-0.5 text-[10px] font-bold mr-2">MÔ TẢ ${String.fromCharCode(65 + idx)}</span>
+                                ${stmt.text}
+                            </td>
+                            <td class="py-4 text-center">
+                                <label class="inline-flex items-center justify-center cursor-pointer p-2 rounded-full hover:bg-blue-50">
+                                    <input type="radio" name="p1-most" value="${stmt.role}" ${isMostChecked} onclick="setIpsativeValue(${idx}, 'most')" class="w-5 h-5 text-blue-600 focus:ring-blue-500 border-slate-300">
+                                </label>
+                            </td>
+                            <td class="py-4 text-center">
+                                <label class="inline-flex items-center justify-center cursor-pointer p-2 rounded-full hover:bg-rose-50">
+                                    <input type="radio" name="p1-least" value="${stmt.role}" ${isLeastChecked} onclick="setIpsativeValue(${idx}, 'least')" class="w-5 h-5 text-rose-600 focus:ring-rose-500 border-slate-300">
+                                </label>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                bodyContent.innerHTML = html;
+
+            } else {
+                // PART 2: LOGICAL MCQ / INTERACTIVE MATRIX VIEW
+                const qData = testQuestionsPart2[activeQuestionIndex];
+                questionTitle.innerText = `PHẦN 2: TƯ DUY LOGIC ${activeQuestionIndex + 1} / 20`;
+                questionCategory.innerText = qData.category;
+
+                const savedAnswer = userAnswersPart2[activeQuestionIndex] || '';
+
+                let html = `
+                    <div class="space-y-6">
+                        <div class="text-slate-800 text-sm md:text-base font-semibold leading-relaxed">
+                            ${qData.question}
+                        </div>
+                `;
+
+                // If visual IQ puzzle, render interactive GMAT geometric matrix dynamically from pool SVG markup
+                if(qData.isVisual) {
+                    html += `
+                        <div class="grid md:grid-cols-12 gap-6 items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="md:col-span-6 flex justify-center">
+                                <div class="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                                    <!-- Render Matrix Cells (1 to 8) -->
+                                    ${qData.matrix.map((cellSvg, cIdx) => {
+                                        if(cIdx === 8) {
+                                            // 9th element is drop-zone target
+                                            return `
+                                                <div id="drop-zone" class="w-16 h-16 border-2 border-dashed border-blue-400 bg-blue-50/50 rounded-lg flex items-center justify-center relative transition-all" onclick="clickDropZone()">
+                                                    <div id="drop-placeholder" class="text-center ${savedAnswer ? 'hidden' : ''}">
+                                                        <span class="text-xl font-bold text-blue-600">?</span>
+                                                    </div>
+                                                    <div id="dropped-content" class="absolute inset-0 flex items-center justify-center ${savedAnswer ? '' : 'hidden'}">
+                                                        ${savedAnswer ? getSvgForOption(savedAnswer, qData) : ''}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        } else {
+                                            return `
+                                                <div class="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center">
+                                                    ${cellSvg}
+                                                </div>
+                                            `;
+                                        }
+                                    }).join('')}
+                                </div>
+                            </div>
+                            <div class="md:col-span-6 space-y-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Mảnh ghép thử nghiệm nhấp nhanh:</span>
+                                <div class="grid grid-cols-4 gap-2">
+                                    ${qData.options.map(opt => `
+                                        <div class="p-2 border border-slate-200 bg-white rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:shadow-sm" onclick="handleVisualClick('${opt.key}')">
+                                            ${opt.svg}
+                                            <span class="text-[9px] font-bold text-slate-400 mt-1">${opt.key}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Render options selector list
+                html += `
+                    <div class="grid grid-cols-1 gap-3 mt-4">
+                `;
+
+                qData.options.forEach(opt => {
+                    const isSelected = savedAnswer === opt.key ? 'border-blue-500 bg-blue-50/50 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50/50';
+                    const isRadioChecked = savedAnswer === opt.key ? 'checked' : '';
+
+                    html += `
+                        <label onclick="setLogicalValue('${opt.key}')" class="flex items-start gap-3 p-3.5 border rounded-xl cursor-pointer transition-all ${isSelected}">
+                            <input type="radio" name="logical-opt" value="${opt.key}" ${isRadioChecked} class="mt-0.5 w-4.5 h-4.5 text-blue-600 focus:ring-blue-500 border-slate-300">
+                            <span class="text-xs md:text-sm text-slate-700 leading-normal">
+                                <strong class="text-slate-900">${opt.key}.</strong> ${opt.text}
+                            </span>
+                        </label>
+                    `;
+                });
+
+                html += `
+                    </div>
+                </div>
+                `;
+
+                bodyContent.innerHTML = html;
+            }
+
+            // Adjust navigation buttons visibility/state
+            document.getElementById('btn-prev').disabled = (activePart === 1 && activeQuestionIndex === 0);
+            
+            const btnNext = document.getElementById('btn-next');
+            if(activePart === 2 && activeQuestionIndex === 19) {
+                btnNext.innerText = "Nộp Bài Đánh Giá 🚀";
+                btnNext.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                btnNext.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            } else {
+                btnNext.innerText = "Tiếp theo ➔";
+                btnNext.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                btnNext.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }
+        }
+
+        // Helper to get dynamic SVG string from the active question's option database
+        function getSvgForOption(key, qData) {
+            const optObj = qData.options.find(o => o.key === key);
+            return optObj ? optObj.svg : '';
+        }
+
+        // Handle quick click on geometric matrix options
+        function handleVisualClick(key) {
+            setLogicalValue(key);
+            // Refresh matrix target instantly
+            const placeholder = document.getElementById('drop-placeholder');
+            const droppedContent = document.getElementById('dropped-content');
+            
+            const qData = testQuestionsPart2[activeQuestionIndex];
+            droppedContent.innerHTML = getSvgForOption(key, qData);
+            placeholder.classList.add('hidden');
+            droppedContent.classList.remove('hidden');
+        }
+
+        // SET VALUE: Ipsative selection logic
+        function setIpsativeValue(stmtIdx, type) {
+            const qData = testQuestionsPart1[activeQuestionIndex];
+            const chosenRole = qData.statements[stmtIdx].role;
+
+            if(!userAnswersPart1[activeQuestionIndex]) {
+                userAnswersPart1[activeQuestionIndex] = { most: '', least: '' };
+            }
+
+            const currentObj = userAnswersPart1[activeQuestionIndex];
+            const otherType = type === 'most' ? 'least' : 'most';
+
+            // Mutual exclusion rule check
+            if(currentObj[otherType] === chosenRole) {
+                currentObj[otherType] = ''; // Reset the other side
+            }
+
+            currentObj[type] = chosenRole;
+            renderCurrentQuestion();
+        }
+
+        // SET VALUE: Logical selection logic
+        function setLogicalValue(optionKey) {
+            userAnswersPart2[activeQuestionIndex] = optionKey;
+            
+            // Visual feedback update instantly
+            const radios = document.getElementsByName('logical-opt');
+            radios.forEach(radio => {
+                if(radio.value === optionKey) {
+                    radio.checked = true;
+                    // Highlight outer box
+                    radio.closest('label').classList.add('border-blue-500', 'bg-blue-50/50', 'ring-2', 'ring-blue-100');
+                } else {
+                    radio.closest('label').classList.remove('border-blue-500', 'bg-blue-50/50', 'ring-2', 'ring-blue-100');
+                    radio.closest('label').classList.add('border-slate-200');
+                }
+            });
+
+            updateProgressBar();
+        }
+
+        // BUILD TINY DOTS NAVIGATION LIST
+        function renderQuestionDots() {
+            const container = document.getElementById('question-dots');
+            container.innerHTML = '';
+
+            for(let i = 0; i < 20; i++) {
+                const dot = document.createElement('button');
+                dot.className = "w-2 h-2 rounded-full flex-shrink-0 transition-all ";
+                
+                let isAnswered = false;
+                if(activePart === 1) {
+                    isAnswered = userAnswersPart1[i] && userAnswersPart1[i].most && userAnswersPart1[i].least;
+                } else {
+                    isAnswered = userAnswersPart2[i] ? true : false;
+                }
+
+                if(i === activeQuestionIndex) {
+                    dot.className += "bg-blue-600 ring-4 ring-blue-100 scale-125";
+                } else if(isAnswered) {
+                    dot.className += "bg-emerald-500";
+                } else {
+                    dot.className += "bg-slate-300 hover:bg-slate-400";
+                }
+
+                dot.onclick = () => jumpToQuestion(i);
+                container.appendChild(dot);
+            }
+        }
+
+        function jumpToQuestion(idx) {
+            // Validate first if moving forward
+            if(idx > activeQuestionIndex) {
+                if(!validateCurrentStepAnswer()) return;
+            }
+            activeQuestionIndex = idx;
+            renderCurrentQuestion();
+        }
+
+        // VALIDATE ANSWERS FOR PREVENTING BLANK SUBMISSIONS
+        function validateCurrentStepAnswer() {
+            if(activePart === 1) {
+                const ans = userAnswersPart1[activeQuestionIndex];
+                if(!ans || !ans.most || !ans.least) {
+                    showAlert('Bạn cần chọn đầy đủ 1 phát biểu "Giống nhất" và 1 phát biểu "Ít giống nhất" cho câu hỏi này trước khi tiếp tục!');
+                    return false;
+                }
+            } else {
+                const ans = userAnswersPart2[activeQuestionIndex];
+                if(!ans) {
+                    showAlert('Vui lòng chọn 1 đáp án trước khi tiếp tục!');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // WIZARD NAVIGATION CONTROLS
+        function handleNext() {
+            if(!validateCurrentStepAnswer()) return;
+
+            if(activePart === 1) {
+                if(activeQuestionIndex < 19) {
+                    activeQuestionIndex++;
+                } else {
+                    // Transition from Part 1 to Part 2
+                    activePart = 2;
+                    activeQuestionIndex = 0;
+                    showAlert('Bạn đã hoàn thành Phần 1. Hệ thống đang chuyển hướng sang Phần 2: Đánh giá Tư duy Logic!');
+                }
+                renderCurrentQuestion();
+            } else {
+                if(activeQuestionIndex < 19) {
+                    activeQuestionIndex++;
+                    renderCurrentQuestion();
+                } else {
+                    // Submit final exam
+                    submitAssessment();
+                }
+            }
+        }
+
+        function handlePrev() {
+            if(activePart === 1) {
+                if(activeQuestionIndex > 0) {
+                    activeQuestionIndex--;
+                }
+            } else {
+                if(activeQuestionIndex > 0) {
+                    activeQuestionIndex--;
+                } else {
+                    // Back to Part 1
+                    activePart = 1;
+                    activeQuestionIndex = 19;
+                }
+            }
+            renderCurrentQuestion();
+        }
+
+        // UPDATE CENTRAL PROGRESS GRAPHICS
+        function updateProgressBar() {
+            let answered = 0;
+            
+            // Count completed part 1 items
+            for(let i = 0; i < 20; i++) {
+                if(userAnswersPart1[i] && userAnswersPart1[i].most && userAnswersPart1[i].least) {
+                    answered++;
+                }
+            }
+            // Count completed part 2 items
+            for(let i = 0; i < 20; i++) {
+                if(userAnswersPart2[i]) {
+                    answered++;
+                }
+            }
+
+            document.getElementById('answered-count').innerText = `${answered}/40`;
+            const pct = Math.round((answered / 40) * 100);
+            document.getElementById('progress-percent-text').innerText = `${pct}%`;
+            document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+
+            // Adjust header color dynamically
+            const partBadge = document.getElementById('current-part-badge');
+            const partTitle = document.getElementById('part-title-display');
+            if(activePart === 1) {
+                partBadge.innerText = "PHẦN 1/2";
+                partBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-blue-150 text-blue-700 uppercase";
+                partTitle.innerText = "Khảo Sát Tố Chất Công Việc (Ipsative Format)";
+            } else {
+                partBadge.innerText = "PHẦN 2/2";
+                partBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-150 text-emerald-700 uppercase bg-emerald-50";
+                partTitle.innerText = "Tư Duy Hệ Thống & Logic (GMAT/PST)";
+            }
+        }
+
+        // CALCULATE RESULTS & DISPLAY INSIGHTS
+        function submitAssessment() {
+            clearInterval(testTimerInterval);
+
+            // Calculate Logical Score (Each correct is worth 5 points -> total 100)
+            let correctCount = 0;
+            let logicDetailReviewHtml = "";
+
+            testQuestionsPart2.forEach((q, idx) => {
+                const userAns = userAnswersPart2[idx] || 'Chưa trả lời';
+                const isCorrect = userAns === q.correct;
+                if(isCorrect) correctCount++;
+
+                const statusColor = isCorrect ? 'border-emerald-200 bg-emerald-50/40 text-emerald-900' : 'border-rose-200 bg-rose-50/40 text-rose-900';
+                const statusBadge = isCorrect ? '<span class="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">ĐÚNG</span>' : '<span class="bg-rose-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">SAI</span>';
+
+                let visualGridHtml = "";
+                if(q.isVisual) {
+                    visualGridHtml = `
+                        <div class="flex justify-start my-3">
+                            <div class="grid grid-cols-3 gap-1 bg-white p-2 rounded-xl border border-slate-200 shadow-sm max-w-[150px]">
+                                ${q.matrix.map((cellSvg, cIdx) => {
+                                    if(cIdx === 8) {
+                                        return `<div class="w-10 h-10 border border-dashed border-blue-400 bg-blue-50 flex items-center justify-center">${getSvgForOption(userAns, q)}</div>`;
+                                    } else {
+                                        return `<div class="w-10 h-10 bg-slate-50 flex items-center justify-center">${cellSvg}</div>`;
+                                    }
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                logicDetailReviewHtml += `
+                    <div class="border rounded-2xl p-4 md:p-5 ${statusColor} space-y-3">
+                        <div class="flex justify-between items-start gap-4 text-xs">
+                            <span class="font-bold text-slate-500 uppercase tracking-wider">CÂU HỎI ${idx + 1} (${q.category})</span>
+                            ${statusBadge}
+                        </div>
+                        <p class="font-semibold text-slate-900 text-sm leading-relaxed">${q.question}</p>
+                        
+                        ${visualGridHtml}
+
+                        <div class="grid sm:grid-cols-2 gap-2 text-xs">
+                            ${q.options.map(opt => {
+                                const selectedMarker = opt.key === userAns ? '➔ ' : '';
+                                const weightStyle = opt.key === q.correct ? 'font-bold text-emerald-600 bg-white border border-emerald-300 p-2 rounded-lg flex items-center gap-2' : (opt.key === userAns ? 'font-bold text-rose-600 bg-white border border-rose-300 p-2 rounded-lg flex items-center gap-2' : 'text-slate-500 p-2 flex items-center gap-2');
+                                return `
+                                    <div class="${weightStyle}">
+                                        <span>${selectedMarker}${opt.key}. ${opt.text}</span>
+                                        ${q.isVisual ? `<div class="w-8 h-8 ml-auto flex-shrink-0 bg-slate-50 rounded border border-slate-200 flex items-center justify-center">${opt.svg}</div>` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="bg-white/70 rounded-xl p-3 text-xs border border-slate-200/50 mt-2">
+                            <strong class="text-indigo-900">Giải thích chi tiết:</strong> ${q.explanation}
+                        </div>
+                    </div>
+                `;
+            });
+
+            const logicScore = correctCount * 5;
+
+            // Calculate Personality Affinity Points
+            let rawTally = { PM: 0, PO: 0, SA: 0 };
+
+            for(let i = 0; i < 20; i++) {
+                const ans = userAnswersPart1[i];
+                if(ans) {
+                    if(ans.most) rawTally[ans.most] += 2;
+                    if(ans.least) rawTally[ans.least] -= 1;
+                }
+            }
+
+            // Normalization to percentages
+            let pmNorm = Math.max(0, rawTally.PM + 20);
+            let poNorm = Math.max(0, rawTally.PO + 20);
+            let saNorm = Math.max(0, rawTally.SA + 20);
+            const totalNorm = pmNorm + poNorm + saNorm;
+
+            let pmPct = 33, poPct = 33, saPct = 34;
+            if(totalNorm > 0) {
+                pmPct = Math.round((pmNorm / totalNorm) * 100);
+                poPct = Math.round((poNorm / totalNorm) * 100);
+                saPct = 100 - (pmPct + poPct);
+            }
+
+            // Determine Optimal Recommended Role
+            let optimalRole = "";
+            let brief = "";
+            let path = "";
+            let maxVal = Math.max(pmPct, poPct, saPct);
+
+            if(maxVal === pmPct) {
+                optimalRole = "Project Manager (PM) - Quản Trị Dự Án Chuyên Nghiệp";
+                brief = "Tố chất hành vi của bạn thể hiện sự vượt trội trong việc quản trị rủi ro, tối ưu hóa quy trình phân rã công việc (WBS), kiểm soát lịch trình làm việc và điều phối dung hòa các xung đột lợi ích nhân sự. Bạn có xu hướng hành động có kỷ luật thép, tôn trọng thời hạn bàn giao và thích giữ vững sự ổn định.";
+                path = "Lộ trình đề xuất: Chuyên sâu hóa Agile/Scrum Master Masterclass, Quản trị chi phí đầu tư dự án CNTT và Nghệ thuật lãnh đạo không chức danh (Lateral Leadership).";
+            } else if(maxVal === poPct) {
+                optimalRole = "Product Owner (PO) - Quản Trị Sản Phẩm Xuất Sắc";
+                brief = "Bạn có xu hướng say mê nghiên cứu hành vi khách hàng, nhạy bén tuyệt vời trước các biến động của thị trường kinh doanh và luôn mong muốn tối đa hóa tỷ suất ROI của từng tính năng phát triển. Bạn có tư duy sáng tạo dồi dào, sẵn sàng thử nghiệm nhanh (prototyping) và thấu hiểu sâu sắc cách thức biến mã nguồn thành tiền tệ.";
+                path = "Lộ trình đề xuất: Khóa huấn luyện Product Discovery nâng cao, Phân tích chỉ số tăng trưởng Product-Led Growth (PLG) và Mô phỏng tương tác UI/UX thực tế.";
+            } else {
+                optimalRole = "System Architect (SA) - Kiến Trúc Sư Hệ Thống Chiến Lược";
+                brief = "Tư duy của bạn sinh ra để kiến tạo thế giới cấu trúc. Bạn bị thôi thúc bởi việc tối ưu hóa hiệu năng, bảo vệ độ toàn vẹn của dữ liệu và thiết lập nền tảng hạ tầng công nghệ bền vững, có khả năng mở rộng không giới hạn. Bạn tôn sùng tính logic khách quan, tư duy hệ thống mạch lạc và các nguyên lý lập trình chuẩn mực.";
+                path = "Lộ trình đề xuất: Thiết kế hệ thống chịu tải siêu lớn (Microservices), An toàn bảo mật thông tin hạ tầng điện toán đám mây và Standardized API Design patterns.";
+            }
+
+            // GMAT Score rating text
+            let logicTextRating = "";
+            if(logicScore >= 90) {
+                logicTextRating = "Thành tích xuất sắc thuộc nhóm 5% ứng viên dẫn đầu thế giới (chuẩn GMAT 750+). Bạn có năng lực tư duy giải thuật tối ưu, phân tích nhạy bén dữ liệu kinh doanh phức tạp và có khả năng ra quyết định hệ thống chuẩn xác dưới áp lực cao.";
+            } else if(logicScore >= 70) {
+                logicTextRating = "Kết quả xuất sắc chuẩn GMAT 650+. Bạn giải quyết tốt các bài toán ràng buộc tài nguyên hệ thống, định hướng thuật toán mạch lạc và nhạy bén với thông số kinh tế số học.";
+            } else if(logicScore >= 50) {
+                logicTextRating = "Đạt mức trung bình khá chuẩn quốc tế. Bạn xử lý ổn các bài toán đơn mục tiêu nhưng cần rèn luyện thêm phương pháp bóc tách đa biến và tư duy tối ưu hóa hạ tầng dưới áp lực hạn hẹp của tài nguyên.";
+            } else {
+                logicTextRating = "Kết quả ở mức cần cải thiện nhiều. Bạn nên tập trung học các kỹ năng cấu trúc hóa tư duy, nâng cao thuật toán cơ bản và học cách đọc hiểu biểu đồ kinh tế trước khi bước vào đào tạo chuyên sâu.";
+            }
+
+            // Calculate Dynamic Matching Affinity score
+            let affinity = Math.min(99, Math.round(50 + (maxVal * 0.5) + (logicScore * 0.2)));
+
+            // POPULATE TO DOM ELEMENTS
+            document.getElementById('res-cand-name').innerText = candName;
+            document.getElementById('res-cand-email').innerText = candEmail;
+            document.getElementById('res-logic-score').innerText = `${logicScore} / 100`;
+            document.getElementById('res-affinity-score').innerText = `${affinity}%`;
+            document.getElementById('res-recommended-role').innerText = optimalRole;
+            document.getElementById('res-role-brief').innerText = brief;
+            document.getElementById('res-logic-analysis').innerText = logicTextRating;
+            document.getElementById('res-training-pathway').innerText = path;
+
+            // Update Graph progress bars
+            document.getElementById('pm-pct').innerText = `${pmPct}%`;
+            document.getElementById('pm-bar').style.width = `${pmPct}%`;
+            document.getElementById('po-pct').innerText = `${poPct}%`;
+            document.getElementById('po-bar').style.width = `${poPct}%`;
+            document.getElementById('sa-pct').innerText = `${saPct}%`;
+            document.getElementById('sa-bar').style.width = `${saPct}%`;
+
+            // Inject detailed logic test answers review
+            document.getElementById('answers-review-list').innerHTML = logicDetailReviewHtml;
+
+            // Switch UI container view
+            document.getElementById('assessment-container').classList.add('hidden');
+            document.getElementById('test-timer-wrapper').classList.add('hidden');
+            document.getElementById('results-container').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // AUTO FORCE SUBMISSION ON TIMEOUT
+        function forceAutoSubmit() {
+            for(let i = 0; i < 20; i++) {
+                if(!userAnswersPart1[i]) {
+                    userAnswersPart1[i] = { most: 'PM', least: 'PO' };
+                }
+                if(!userAnswersPart2[i]) {
+                    userAnswersPart2[i] = 'A'; // defaults to A
+                }
+            }
+            submitAssessment();
+        }
+
+        // RESET AND RESTART WHOLE SESSION
+        function resetAssessment() {
+            document.getElementById('cand-name').value = '';
+            document.getElementById('cand-email').value = '';
+            
+            userAnswersPart1 = {};
+            userAnswersPart2 = {};
+            activePart = 1;
+            activeQuestionIndex = 0;
+
+            const wrapper = document.getElementById('test-timer-wrapper');
+            wrapper.classList.add('bg-rose-900/40', 'text-rose-300');
+            wrapper.classList.remove('bg-rose-600', 'text-white', 'animate-bounce');
+
+            document.getElementById('results-container').classList.add('hidden');
+            document.getElementById('step-welcome').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
